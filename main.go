@@ -12,11 +12,11 @@ import (
 func main() {
 	initConfig()
 	r := gin.Default()
-	r.GET("/ping", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{
-			"message": "pong",
-		})
+
+	r.GET("/healthz", func(c *gin.Context) {
+		c.String(http.StatusOK, "Ok v1")
 	})
+
 	r.Run(":" + viper.GetString("app.port"))
 }
 
