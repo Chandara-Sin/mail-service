@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"mail-service/mail"
 	"net/http"
 	"strings"
 
@@ -17,16 +18,18 @@ func main() {
 		c.String(http.StatusOK, "Ok v1")
 	})
 
+	r.POST("v1/smtp/mail", mail.SendEmailHandler(mail.SendEmail()))
+
 	r.Run(":" + viper.GetString("app.port"))
 }
 
 func initConfig() {
-	viper.SetConfigName("config") // name of config file (without extension)
-	viper.SetConfigType("yaml")   // REQUIRED if the config file does not have the extension in the name
-	viper.AddConfigPath(".")      // optionally look for config in the working directory
-	err := viper.ReadInConfig()   // Find and read the config file
+	viper.SetConfigName("config")
+	viper.SetConfigType("yaml")
+	viper.AddConfigPath(".")
+	err := viper.ReadInConfig()
 	if err != nil {
-		fmt.Printf("Fatal error config file: %s \n", err) // Handle errors reading the config file
+		fmt.Printf("Fatal error config file: %s \n", err)
 	}
 
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
