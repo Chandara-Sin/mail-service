@@ -1,6 +1,7 @@
 package mail
 
 import (
+	"crypto/tls"
 	"encoding/base64"
 	"fmt"
 	"mime"
@@ -18,7 +19,41 @@ func SendEmail() func(Mail) error {
 		host := fmt.Sprintf("%v", viper.GetString("smtp.host"))
 
 		auth := smtp.PlainAuth("", viper.GetString("smtp.user"), viper.GetString("smtp.password"), host)
-		err := smtp.SendMail(addr, auth, from.Address, []string{to.Address}, []byte(ml.setDefaultTemplate(to, from)))
+		tlsConfig := &tls.Config{
+			InsecureSkipVerify: true,
+			ServerName:         host,
+		}
+		connection, err := tls.Dial("tcp", addr, tlsConfig)
+		if err != nil {
+			fmt.Println(err)
+		}
+		smtpClient, err := smtp.NewClient(connection, host)
+		if err != nil {
+			fmt.Println(err)
+		}
+		if err = smtpClient.Auth(auth); err != nil {
+			fmt.Println(err)
+		}
+		if err = smtpClient.Mail(from.Address); err != nil {
+			fmt.Println(err)
+		}
+		if err = smtpClient.Rcpt(to.Address); err != nil {
+			fmt.Println(err)
+		}
+		writer, err := smtpClient.Data()
+		if err != nil {
+			fmt.Println(err)
+		}
+		_, err = writer.Write([]byte(ml.setDefaultTemplate(to, from)))
+		if err != nil {
+			fmt.Println(err)
+		}
+		err = writer.Close()
+		if err != nil {
+			fmt.Println(err)
+		}
+		err = smtpClient.Quit()
+
 		return err
 	}
 }
