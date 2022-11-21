@@ -10,6 +10,13 @@ This is project use MakeFile
 app:
   host: localhost
   port: "8080"
+smtp:
+  host:
+  port:
+  user:
+  password:
+  sender: <sender_mail>
+  from: <sender_name>
 ```
 
 ### Run server
