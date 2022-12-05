@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"mail-service/logger"
 	"mail-service/mail"
 	"net/http"
 	"os/signal"
@@ -11,13 +12,24 @@ import (
 	"syscall"
 	"time"
 
+	ginzap "github.com/gin-contrib/zap"
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"
+	"go.uber.org/zap"
 )
 
 func main() {
 	initConfig()
 	r := gin.Default()
+
+	zaplog, err := zap.NewProduction()
+	if err != nil {
+		log.Fatalf("can't initialize zap logger: %v", err)
+	}
+	defer zaplog.Sync()
+	r.Use(ginzap.Ginzap(zaplog, time.RFC3339, true))
+	r.Use(ginzap.RecoveryWithZap(zaplog, true))
+	r.Use(logger.Middleware(zaplog))
 
 	r.GET("/healthz", func(c *gin.Context) {
 		c.String(http.StatusOK, "Ok v1")
