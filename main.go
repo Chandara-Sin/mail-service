@@ -12,6 +12,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/gin-contrib/cors"
 	ginzap "github.com/gin-contrib/zap"
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"
@@ -30,6 +31,18 @@ func main() {
 	r.Use(ginzap.Ginzap(zaplog, time.RFC3339, true))
 	r.Use(ginzap.RecoveryWithZap(zaplog, true))
 	r.Use(logger.Middleware(zaplog))
+
+	config := cors.DefaultConfig()
+	config.AllowOrigins = []string{
+		"http://localhost:8000",
+		"http://localhost:3000",
+	}
+	config.AllowHeaders = append(
+		config.AllowHeaders,
+		"X-API-KEY",
+	)
+	config.AllowCredentials = true
+	r.Use(cors.New(config))
 
 	r.GET("/healthz", func(c *gin.Context) {
 		c.String(http.StatusOK, "Ok v1")
