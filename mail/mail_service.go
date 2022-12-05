@@ -4,15 +4,19 @@ import (
 	"crypto/tls"
 	"encoding/base64"
 	"fmt"
+	"mail-service/logger"
 	"mime"
 	"net/mail"
 	"net/smtp"
 
+	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"
 )
 
-func SendEmail() func(Mail) error {
-	return func(ml Mail) error {
+func SendEmail() func(Mail, *gin.Context) error {
+	return func(ml Mail, c *gin.Context) error {
+		log := logger.Unwrap(c)
+
 		to := mail.Address{Name: "dome", Address: ml.To[0]}
 		from := mail.Address{Name: viper.GetString("smtp.from"), Address: viper.GetString("smtp.sender")}
 		addr := fmt.Sprintf("%v:%v", viper.GetString("smtp.host"), viper.GetString("smtp.port"))
@@ -25,32 +29,32 @@ func SendEmail() func(Mail) error {
 		}
 		connection, err := tls.Dial("tcp", addr, tlsConfig)
 		if err != nil {
-			fmt.Println(err)
+			log.Error(err.Error())
 		}
 		smtpClient, err := smtp.NewClient(connection, host)
 		if err != nil {
-			fmt.Println(err)
+			log.Error(err.Error())
 		}
 		if err = smtpClient.Auth(auth); err != nil {
-			fmt.Println(err)
+			log.Error(err.Error())
 		}
 		if err = smtpClient.Mail(from.Address); err != nil {
-			fmt.Println(err)
+			log.Error(err.Error())
 		}
 		if err = smtpClient.Rcpt(to.Address); err != nil {
-			fmt.Println(err)
+			log.Error(err.Error())
 		}
 		writer, err := smtpClient.Data()
 		if err != nil {
-			fmt.Println(err)
+			log.Error(err.Error())
 		}
 		_, err = writer.Write([]byte(ml.setDefaultTemplate(to, from)))
 		if err != nil {
-			fmt.Println(err)
+			log.Error(err.Error())
 		}
 		err = writer.Close()
 		if err != nil {
-			fmt.Println(err)
+			log.Error(err.Error())
 		}
 		err = smtpClient.Quit()
 
